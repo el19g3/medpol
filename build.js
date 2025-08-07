@@ -1,102 +1,172 @@
-// Part 1: These lines are like listing the tools we need from the toolbox.
-// We are telling the program we need the Notion client and the 'dotenv' tool.
+// Import necessary libraries
 const { Client } = require("@notionhq/client");
 const { config } = require("dotenv");
-const fs = require("fs"); // 'fs' is a built-in tool for working with files.
+const fs = require("fs");
 
-// This line tells our program to open the '.env' file and load our secrets.
+// Load environment variables from .env file
 config();
 
-// Part 2: Here we set up our connection to Notion.
-// It creates a new Notion client and gives it the secret key for authentication.
+// Initialize the Notion client
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const databaseId = process.env.NOTION_DATABASE_ID;
 
-// Part 3: This is the main task for our "robot".
-// We define a function that will fetch the data and build the website.
-async function buildSite() {
-  console.log("Starting... Going to Notion to get the questions.");
-
+// Main function to fetch data and build the site
+async function main() {
   try {
-    // This command tells our Notion client to get all the items from our database.
+    console.log("Fetching questions from Notion...");
     const response = await notion.databases.query({
       database_id: databaseId,
     });
-    
-    // Notion data is a bit complicated, so this next part cleans it up for us.
+
     const questions = response.results.map(page => {
-      // This is a small helper to safely get text out of a Notion property.
-      const getPlainText = (property) => property?.[0]?.plain_text || "Not Available";
+      // Helper functions to safely get data from different Notion property types
+      const getPlainText = (property) => property?.[0]?.plain_text || null;
+      const getSelectName = (property) => property?.select?.name || null;
 
-      // We create a simple, clean object for each question.
+      // This part is new: We assemble the options from separate columns
+      const options = [];
+      const optionPrefixes = ['Α.', 'Β.', 'Γ.', 'Δ.', 'Ε.'];
+      const optionColumns = ['Επιλογή Α', 'Επιλογή Β', 'Επιλογή Γ', 'Επιλογή Δ', 'Επιλογή Ε'];
+
+      for (let i = 0; i < optionColumns.length; i++) {
+        const optionText = getPlainText(page.properties[optionColumns[i]]?.rich_text);
+        if (optionText) { // Only add the option if the cell is not empty
+          options.push(`${optionPrefixes[i]} ${optionText}`);
+        }
+      }
+      
+      // We return a clean object for each question
       return {
-        question: getPlainText(page.properties.Question?.title),
-        correctAnswer: getPlainText(page.properties["Correct Answer"]?.rich_text),
-        options: page.properties.Answers?.multi_select.map(opt => opt.name) || [],
+        // IMPORTANT: If your category/subject column has a different name, change "Κλινική Ανοσολογία" here.
+        // It should match the name of the column you use for grouping (e.g., a "Select" property).
+        category: getSelectName(page.properties["Κλινική Ανοσολογία"]),
+        question: getPlainText(page.properties["Ερωτήσεις Πολλαπλής Επιλογής"]?.title),
+        correctAnswer: getSelectName(page.properties["Σωστή Απάντηση"]),
+        options: options,
       };
-    });
+    }).filter(q => q.question); // Filter out any empty rows
 
-    console.log(`Success! Found ${questions.length} questions.`);
-    console.log("Now, building the HTML file...");
+    console.log(`Found ${questions.length} questions.`);
 
-    // Part 4: Now we generate the HTML for the webpage.
-    // HTML is the language that web browsers use to display content.
-    const questionCardsHTML = questions.map(q => `
-      <div class="card">
-        <h2>${q.question}</h2>
-        <ul class="options">
-          ${q.options.map(opt => `<li>${opt}</li>`).join('')}
-        </ul>
-        <details>
-          <summary>Show Answer</summary>
-          <p><strong>Correct Answer:</strong> ${q.correctAnswer}</p>
-        </details>
-      </div>
-    `).join('');
+    // Generate HTML content using the new structure
+    const htmlContent = generateHTML(questions);
 
-    // This is the full template for our final webpage.
-    // It includes some basic CSS for styling to make it look nice.
-    const finalHtml = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>MedPollaplis - Medical Questions</title>
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; }
-          .container { max-width: 800px; margin: 0 auto; }
-          h1 { color: #333; text-align: center; margin-bottom: 40px; }
-          .card { background: #ffffff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
-          .card h2 { margin-top: 0; font-size: 1.25em; }
-          .options { list-style: none; padding: 0; margin: 16px 0; }
-          .options li { background-color: #e7f3ff; border: 1px solid #cce0ff; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-          details { margin-top: 16px; }
-          summary { cursor: pointer; font-weight: 600; color: #007bff; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>MedPollaplis Questions</h1>
-          ${questionCardsHTML}
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Part 5: Save the final product.
-    // This creates a folder called 'dist' (for "distribution") and saves our HTML file inside it.
+    // Create a 'dist' directory if it doesn't exist
     if (!fs.existsSync("dist")) {
       fs.mkdirSync("dist");
     }
-    fs.writeFileSync("dist/index.html", finalHtml);
 
-    console.log("All done! Your website has been created in the 'dist' folder.");
+    // Write the HTML file
+    fs.writeFileSync("dist/index.html", htmlContent);
+    console.log("✅ Website built successfully in the 'dist' folder!");
 
   } catch (error) {
-    console.error("Oh no! Something went wrong:", error.message);
+    console.error("❌ Error building website:", error);
   }
 }
 
-// This final line runs the main task we defined above.
-buildSite();
+// Function to generate the final HTML from the questions data
+function generateHTML(questions) {
+  // First, we group the questions by their category
+  const questionsByCategory = questions.reduce((acc, q) => {
+    const category = q.category || "Uncategorized"; // Use "Uncategorized" if no category is set
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(q);
+    return acc;
+  }, {});
+
+  // Then, we build the HTML for each category section
+  let allCategoriesHtml = Object.entries(questionsByCategory).map(([category, questionsInSection]) => {
+    const questionCards = questionsInSection.map(q => `
+      <div class="card">
+        <p class="question-text">${q.question}</p>
+        <ul class="options">
+          ${q.options.map(opt => `<li>${opt}</li>`).join('')}
+        </ul>
+        ${q.correctAnswer ? `<div class="answer-box">${q.correctAnswer}</div>` : ''}
+      </div>
+    `).join('');
+
+    return `
+      <div class="category-section">
+        <h1 class="category-title">${category}</h1>
+        ${questionCards}
+      </div>
+    `;
+  }).join('');
+
+  // This is the full HTML template with new CSS to match your design
+  return `
+    <!DOCTYPE html>
+    <html lang="el">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>MedPollaplis - Medical Questions</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+      <style>
+        body {
+          background-color: #191919;
+          color: #e3e3e3;
+          font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+          margin: 0;
+          padding: 2rem;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        .category-title {
+          font-size: 1.5rem;
+          color: #ffffff;
+          border-bottom: 1px solid #3a3a3a;
+          padding-bottom: 0.5rem;
+          margin-bottom: 1.5rem;
+        }
+        .card {
+          background-color: #2d2d2d;
+          border-radius: 8px;
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+        }
+        .question-text {
+          font-size: 1.1rem;
+          font-weight: 500;
+          line-height: 1.5;
+          margin: 0 0 1rem 0;
+        }
+        .options {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+        .options li {
+          margin-bottom: 0.5rem;
+          line-height: 1.6;
+        }
+        .answer-box {
+          display: inline-block;
+          background-color: #404040;
+          border: 1px solid #555;
+          border-radius: 6px;
+          padding: 0.25rem 0.75rem;
+          margin-top: 1rem;
+          font-weight: 700;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        ${allCategoriesHtml}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Run the main function
+main();
