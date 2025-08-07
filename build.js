@@ -19,36 +19,34 @@ async function main() {
     });
 
     const questions = response.results.map(page => {
-      // Helper functions to safely get data from different Notion property types
       const getPlainText = (property) => property?.[0]?.plain_text || null;
       const getSelectName = (property) => property?.select?.name || null;
 
-      // This part is new: We assemble the options from separate columns
       const options = [];
       const optionPrefixes = ['Α.', 'Β.', 'Γ.', 'Δ.', 'Ε.'];
       const optionColumns = ['Επιλογή Α', 'Επιλογή Β', 'Επιλογή Γ', 'Επιλογή Δ', 'Επιλογή Ε'];
 
       for (let i = 0; i < optionColumns.length; i++) {
         const optionText = getPlainText(page.properties[optionColumns[i]]?.rich_text);
-        if (optionText) { // Only add the option if the cell is not empty
+        if (optionText) {
           options.push(`${optionPrefixes[i]} ${optionText}`);
         }
       }
       
-      // We return a clean object for each question
       return {
-        // IMPORTANT: If your category/subject column has a different name, change "Κλινική Ανοσολογία" here.
-        // It should match the name of the column you use for grouping (e.g., a "Select" property).
-        category: getSelectName(page.properties["Κλινική Ανοσολογία"]),
         question: getPlainText(page.properties["Ερωτήσεις Πολλαπλής Επιλογής"]?.title),
         correctAnswer: getSelectName(page.properties["Σωστή Απάντηση"]),
         options: options,
       };
-    }).filter(q => q.question); // Filter out any empty rows
+    }).filter(q => q.question); // Only keep rows that have a question text
 
-    console.log(`Found ${questions.length} questions.`);
+    if (questions.length === 0) {
+      console.warn("⚠️ Warning: No questions found after filtering. Check your Notion column names in build.js!");
+    } else {
+      console.log(`Found and processed ${questions.length} questions.`);
+    }
 
-    // Generate HTML content using the new structure
+    // Generate HTML content
     const htmlContent = generateHTML(questions);
 
     // Create a 'dist' directory if it doesn't exist
@@ -65,39 +63,18 @@ async function main() {
   }
 }
 
-// Function to generate the final HTML from the questions data
+// Function to generate the final HTML (simplified without categories)
 function generateHTML(questions) {
-  // First, we group the questions by their category
-  const questionsByCategory = questions.reduce((acc, q) => {
-    const category = q.category || "Uncategorized"; // Use "Uncategorized" if no category is set
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(q);
-    return acc;
-  }, {});
+  const questionCards = questions.map(q => `
+    <div class="card">
+      <p class="question-text">${q.question}</p>
+      <ul class="options">
+        ${q.options.map(opt => `<li>${opt}</li>`).join('')}
+      </ul>
+      ${q.correctAnswer ? `<div class="answer-box">${q.correctAnswer}</div>` : ''}
+    </div>
+  `).join('');
 
-  // Then, we build the HTML for each category section
-  let allCategoriesHtml = Object.entries(questionsByCategory).map(([category, questionsInSection]) => {
-    const questionCards = questionsInSection.map(q => `
-      <div class="card">
-        <p class="question-text">${q.question}</p>
-        <ul class="options">
-          ${q.options.map(opt => `<li>${opt}</li>`).join('')}
-        </ul>
-        ${q.correctAnswer ? `<div class="answer-box">${q.correctAnswer}</div>` : ''}
-      </div>
-    `).join('');
-
-    return `
-      <div class="category-section">
-        <h1 class="category-title">${category}</h1>
-        ${questionCards}
-      </div>
-    `;
-  }).join('');
-
-  // This is the full HTML template with new CSS to match your design
   return `
     <!DOCTYPE html>
     <html lang="el">
@@ -109,64 +86,24 @@ function generateHTML(questions) {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
       <style>
-        body {
-          background-color: #191919;
-          color: #e3e3e3;
-          font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-          margin: 0;
-          padding: 2rem;
-        }
-        .container {
-          max-width: 800px;
-          margin: 0 auto;
-        }
-        .category-title {
-          font-size: 1.5rem;
-          color: #ffffff;
-          border-bottom: 1px solid #3a3a3a;
-          padding-bottom: 0.5rem;
-          margin-bottom: 1.5rem;
-        }
-        .card {
-          background-color: #2d2d2d;
-          border-radius: 8px;
-          padding: 1.5rem;
-          margin-bottom: 1.5rem;
-        }
-        .question-text {
-          font-size: 1.1rem;
-          font-weight: 500;
-          line-height: 1.5;
-          margin: 0 0 1rem 0;
-        }
-        .options {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-        .options li {
-          margin-bottom: 0.5rem;
-          line-height: 1.6;
-        }
-        .answer-box {
-          display: inline-block;
-          background-color: #404040;
-          border: 1px solid #555;
-          border-radius: 6px;
-          padding: 0.25rem 0.75rem;
-          margin-top: 1rem;
-          font-weight: 700;
-        }
+        body { background-color: #191919; color: #e3e3e3; font-family: 'Roboto', sans-serif; margin: 0; padding: 2rem; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .page-title { font-size: 1.8rem; text-align: center; margin-bottom: 2rem; }
+        .card { background-color: #2d2d2d; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .question-text { font-size: 1.1rem; font-weight: 500; line-height: 1.5; margin: 0 0 1rem 0; }
+        .options { list-style: none; padding: 0; margin: 0; }
+        .options li { margin-bottom: 0.5rem; line-height: 1.6; }
+        .answer-box { display: inline-block; background-color: #404040; border: 1px solid #555; border-radius: 6px; padding: 0.25rem 0.75rem; margin-top: 1rem; font-weight: 700; }
       </style>
     </head>
     <body>
       <div class="container">
-        ${allCategoriesHtml}
+        <h1 class="page-title">MedPollaplis Questions</h1>
+        ${questionCards}
       </div>
     </body>
     </html>
   `;
 }
 
-// Run the main function
 main();
