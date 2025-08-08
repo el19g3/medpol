@@ -1,4 +1,4 @@
-// build.js - Final Version with Search, Flagging, Random Quiz, and New Design
+// build.js - Final Version with Show All, Per-Page Counts, and New Features
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -110,13 +110,17 @@ function generateHtml(questions) {
             </header>
             
             <div class="toolbar">
-                <div id="mode-selector">
-                    <button id="mode-all" class="mode-btn active" title="View all questions">All Questions</button>
-                    <button id="mode-quiz" class="mode-btn" title="Start a random quiz">Random Quiz</button>
+                <div class="toolbar-left">
+                    <button id="show-all-answers-btn" class="toolbar-btn">Show All Answers</button>
                 </div>
-                <div id="quiz-options" class="hidden">
-                    <input type="number" id="quiz-count" value="20" min="5" max="100">
-                    <button id="start-quiz-btn">Start</button>
+                <div class="toolbar-right">
+                    <label for="questions-per-page">Questions per page:</label>
+                    <select id="questions-per-page">
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="75">75</option>
+                        <option value="100">100</option>
+                    </select>
                 </div>
             </div>
 
@@ -216,37 +220,33 @@ function getCss() {
         padding: 0.75rem 2rem;
         border-bottom: 1px solid var(--light-gray);
         display: flex;
+        justify-content: space-between;
         align-items: center;
         gap: 1rem;
     }
-    .mode-btn {
+    .toolbar-btn {
         padding: 0.5rem 1rem;
-        border: 1px solid transparent;
-        background-color: transparent;
+        border: 1px solid var(--light-gray);
+        background-color: var(--card-background);
         color: #42526e;
         font-weight: 500;
         cursor: pointer;
         border-radius: 6px;
         transition: all 0.2s;
     }
-    .mode-btn.active {
+    .toolbar-btn:hover {
         background-color: #e9eaf0;
-        color: var(--primary-color);
+        border-color: #c1c7d0;
     }
-    #quiz-options input {
-        width: 60px;
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    #questions-per-page {
         padding: 0.5rem;
-        text-align: center;
+        border-radius: 6px;
         border: 1px solid var(--light-gray);
-        border-radius: 6px;
-    }
-    #start-quiz-btn {
-        background-color: var(--accent-color);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        cursor: pointer;
     }
     main {
       flex: 1;
@@ -388,17 +388,13 @@ function getJavaScript() {
       const categoryFilter = document.getElementById('category-filter');
       const paginationContainer = document.getElementById('pagination-container');
       const searchBar = document.getElementById('search-bar');
-      const modeAllBtn = document.getElementById('mode-all');
-      const modeQuizBtn = document.getElementById('mode-quiz');
-      const quizOptions = document.getElementById('quiz-options');
-      const startQuizBtn = document.getElementById('start-quiz-btn');
-      const quizCountInput = document.getElementById('quiz-count');
+      const showAllAnswersBtn = document.getElementById('show-all-answers-btn');
+      const questionsPerPageSelect = document.getElementById('questions-per-page');
 
       // --- State Management ---
       let currentQuestions = [];
       let currentPage = 1;
-      let appMode = 'all'; // 'all' or 'quiz'
-      const questionsPerPage = 15;
+      let questionsPerPage = 25;
       let flaggedQuestions = JSON.parse(localStorage.getItem('flaggedQuestions')) || [];
 
       // --- Helper Functions ---
@@ -514,38 +510,21 @@ function getJavaScript() {
       // --- Event Listeners ---
       categoryFilter.addEventListener('change', updateQuestionList);
       searchBar.addEventListener('input', updateQuestionList);
-
-      modeAllBtn.addEventListener('click', () => {
-        appMode = 'all';
-        modeAllBtn.classList.add('active');
-        modeQuizBtn.classList.remove('active');
-        quizOptions.classList.add('hidden');
-        updateQuestionList();
-      });
-
-      modeQuizBtn.addEventListener('click', () => {
-        appMode = 'quiz';
-        modeQuizBtn.classList.add('active');
-        modeAllBtn.classList.remove('active');
-        quizOptions.classList.remove('hidden');
-      });
-
-      startQuizBtn.addEventListener('click', () => {
-        const selectedCategory = categoryFilter.value;
-        if (!selectedCategory || selectedCategory === 'Flagged for Review') {
-            alert('Please select a subject to start a quiz.');
-            return;
-        }
-        let quizPool = questionsData.filter(q => q.category === selectedCategory);
-        // Fisher-Yates shuffle
-        for (let i = quizPool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [quizPool[i], quizPool[j]] = [quizPool[j], quizPool[i]];
-        }
-        const count = parseInt(quizCountInput.value, 10);
-        currentQuestions = quizPool.slice(0, count);
+      questionsPerPageSelect.addEventListener('change', (e) => {
+        questionsPerPage = parseInt(e.target.value, 10);
         currentPage = 1;
         render();
+      });
+
+      showAllAnswersBtn.addEventListener('click', () => {
+        const isShowingAll = showAllAnswersBtn.textContent === 'Hide All Answers';
+        quizContainer.querySelectorAll('.question-card').forEach(card => {
+            const btn = card.querySelector('.show-answer-btn');
+            const answerDiv = card.querySelector('.answer-reveal');
+            answerDiv.style.display = isShowingAll ? 'none' : 'block';
+            btn.textContent = isShowingAll ? 'Show Answer' : 'Hide Answer';
+        });
+        showAllAnswersBtn.textContent = isShowingAll ? 'Show All Answers' : 'Hide All Answers';
       });
       
       paginationContainer.addEventListener('click', (e) => {
