@@ -8,9 +8,6 @@ require("dotenv").config();
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const databaseId = process.env.NOTION_DATABASE_ID;
 
-/**
- * Main function to run the script
- */
 async function main() {
   console.log("Fetching data from Notion...");
   try {
@@ -18,56 +15,44 @@ async function main() {
     const questions = processPages(pages);
 
     if (questions.length === 0) {
-      console.warn("⚠️ No questions were processed. Check property names in the script against your Notion DB.");
+      console.warn("⚠️ No questions were processed. Please double-check that your Notion column names for 'Εκφώνηση', 'Μάθημα', and 'Σωστή/ές απάντηση/εις' exactly match the names in this script.");
       return;
     }
     
     console.log(`Successfully processed ${questions.length} questions.`);
     
-    // Ensure the output directory exists
     const outputDir = './dist';
     if (!fs.existsSync(outputDir)){
         fs.mkdirSync(outputDir);
     }
 
-    // Write the necessary files for the website
     fs.writeFileSync(`${outputDir}/index.html`, generateHtml(questions));
     fs.writeFileSync(`${outputDir}/style.css`, getCss());
     fs.writeFileSync(`${outputDir}/script.js`, getJavaScript());
 
-    console.log("✅ Successfully created your website in the 'dist' folder!");
+    console.log("✅ Successfully created your final website in the 'dist' folder!");
 
   } catch (error) {
     console.error("❌ An error occurred:", error);
   }
 }
 
-/**
- * Fetches all pages from the Notion database
- */
 async function getDatabasePages() {
   const pages = [];
   let cursor = undefined;
-
   while (true) {
     const { results, next_cursor } = await notion.databases.query({
       database_id: databaseId,
       start_cursor: cursor,
     });
     pages.push(...results);
-    if (!next_cursor) {
-      break;
-    }
+    if (!next_cursor) break;
     cursor = next_cursor;
   }
   return pages;
 }
 
-/**
- * Processes the raw page data from Notion into a clean question format
- */
 function processPages(pages) {
-  // Helper functions to safely extract data
   const getText = (property) => property?.[0]?.plain_text || null;
   const getTitle = (property) => property?.[0]?.plain_text || null;
   const getSelect = (property) => property?.select?.name || null;
@@ -75,35 +60,30 @@ function processPages(pages) {
 
   return pages.map(page => {
     const props = page.properties;
-
-    // Collect all options that are not empty
     const options = [];
-    const optionPrefixes = ['Α.', 'Β.', 'Γ.', 'Δ.', 'Ε.', 'ΣΤ.'];
     const optionColumns = ['Επιλογή Α', 'Επιλογή Β', 'Επιλογή Γ', 'Επιλογή Δ', 'Επιλογή Ε', 'Επιλογή ΣΤ'];
     
-    for (let i = 0; i < optionColumns.length; i++) {
-        const optionText = getText(props[optionColumns[i]]?.rich_text);
+    for (const columnName of optionColumns) {
+        const optionText = getText(props[columnName]?.rich_text);
         if (optionText) {
-            options.push(`${optionPrefixes[i]} ${optionText}`);
+            // FIX: Removed the logic that added a duplicate prefix. We now use the text directly from Notion.
+            options.push(optionText);
         }
     }
     
-    const questionData = {
+    return {
       id: page.id,
       question: getTitle(props["Εκφώνηση"]?.title),
       options: options,
+      // CRITICAL: Ensure your Notion column is named exactly "Σωστή/ές απάντηση/εις"
       correctAnswers: getMultiSelect(props["Σωστή/ές απάντηση/εις"]?.multi_select),
       justification: getText(props["Αιτιολόγηση"]?.rich_text),
+      // CRITICAL: Ensure your Notion column is named exactly "Μάθημα"
       category: getSelect(props["Μάθημα"]?.select) || "Uncategorized"
     };
-
-    return questionData;
   }).filter(q => q.question && q.options.length > 0);
 }
 
-/**
- * Generates the main HTML file content
- */
 function generateHtml(questions) {
   return `
     <!DOCTYPE html>
@@ -115,20 +95,24 @@ function generateHtml(questions) {
         <link rel="stylesheet" href="style.css">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Roboto+Slab:wght@500;700&display=swap" rel="stylesheet">
     </head>
     <body>
-        <div class="container">
+        <div class="app-container">
             <header class="site-header">
-                <h1>MedPollaplis Questions</h1>
+                <div class="logo">MedPollaplis</div>
                 <div class="filter-container">
-                    <label for="category-filter">Select a Subject to Begin</label>
+                    <label for="category-filter">Select a Subject</label>
                     <select id="category-filter"></select>
                 </div>
             </header>
             <main id="quiz-container">
-                <p class="initial-prompt">Please select a subject from the dropdown above.</p>
+                <div class="initial-prompt">
+                    <h2>Welcome!</h2>
+                    <p>Please select a subject from the dropdown menu above to begin.</p>
+                </div>
             </main>
+            <footer id="pagination-container"></footer>
         </div>
         
         <script>
@@ -140,70 +124,88 @@ function generateHtml(questions) {
   `;
 }
 
-/**
- * Returns the CSS styles as a string
- */
 function getCss() {
   return `
     :root {
-      --background-color: #f4f7f9;
+      --background-color: #f0f2f5;
       --card-background: #ffffff;
-      --text-color: #2c3e50;
-      --primary-color: #3498db;
-      --light-gray: #e1e5e8;
-      --accent-color: #2ecc71;
+      --text-color: #333d47;
+      --heading-color: #1a2c42;
+      --primary-color: #007aff;
+      --light-gray: #dce1e6;
+      --accent-color: #34c759;
+      --border-radius: 12px;
+      --shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
     }
     body {
       background-color: var(--background-color);
       color: var(--text-color);
-      font-family: 'Inter', sans-serif;
+      font-family: 'Lato', sans-serif;
       margin: 0;
-      padding: 1rem;
     }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
     .site-header {
-      text-align: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1.5rem;
+      background-color: var(--card-background);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       border-bottom: 1px solid var(--light-gray);
+      box-shadow: var(--shadow);
     }
-    .site-header h1 {
-      margin: 0 0 1rem 0;
+    .logo {
+      font-family: 'Roboto Slab', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--heading-color);
     }
     .filter-container label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
+      display: none;
     }
     #category-filter {
-      padding: 0.5rem;
-      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
       border: 1px solid var(--light-gray);
       font-size: 1rem;
+      font-family: 'Lato', sans-serif;
       min-width: 250px;
+      background-color: #f8f9fa;
+    }
+    main {
+      flex: 1;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      box-sizing: border-box;
     }
     .initial-prompt {
         text-align: center;
-        color: #7f8c8d;
-        font-size: 1.2rem;
-        padding: 3rem 0;
+        color: #6c757d;
+        padding: 4rem 0;
+    }
+    .initial-prompt h2 {
+        font-family: 'Roboto Slab', serif;
     }
     .question-card {
       background-color: var(--card-background);
-      border-radius: 12px;
-      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      padding: 2rem;
       margin-bottom: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      box-shadow: var(--shadow);
       border: 1px solid var(--light-gray);
     }
     .question-text {
-      font-size: 1.2rem;
-      font-weight: 500;
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-family: 'Roboto Slab', serif;
+      color: var(--heading-color);
       margin: 0 0 1.5rem 0;
-      line-height: 1.6;
+      line-height: 1.5;
     }
     .options-list {
       list-style: none;
@@ -211,62 +213,84 @@ function getCss() {
       margin: 0 0 1.5rem 0;
     }
     .options-list li {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
       line-height: 1.6;
       padding: 0.5rem;
-      border-left: 3px solid var(--light-gray);
     }
     .show-answer-btn {
         background-color: var(--primary-color);
         color: white;
         border: none;
-        padding: 0.75rem 1.5rem;
+        padding: 0.8rem 1.6rem;
         font-size: 1rem;
-        font-weight: 500;
+        font-weight: 700;
         border-radius: 8px;
         cursor: pointer;
-        transition: background-color 0.2s ease;
+        transition: transform 0.2s ease, background-color 0.2s ease;
     }
     .show-answer-btn:hover {
-        background-color: #2980b9;
+        background-color: #0056b3;
+        transform: translateY(-2px);
     }
     .answer-reveal {
-      background-color: #ecf0f1;
-      border-left: 4px solid var(--accent-color);
-      padding: 1rem;
+      background-color: #e9f5ff;
+      border-left: 4px solid var(--primary-color);
+      padding: 1.25rem;
       margin-top: 1.5rem;
       border-radius: 0 8px 8px 0;
       display: none; /* Hidden by default */
     }
-    .answer-reveal p {
-      margin: 0;
-      line-height: 1.7;
+    .answer-reveal p { margin: 0; line-height: 1.7; }
+    .answer-reveal p:first-child { font-weight: bold; margin-bottom: 0.75rem; color: var(--heading-color); }
+    footer {
+        padding: 2rem;
+        text-align: center;
     }
-    .answer-reveal p:first-child {
-        font-weight: bold;
-        margin-bottom: 0.5rem;
+    .pagination-controls button {
+        background-color: var(--card-background);
+        color: var(--primary-color);
+        border: 1px solid var(--light-gray);
+        padding: 0.6rem 1.2rem;
+        margin: 0 0.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .pagination-controls button:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    .pagination-controls button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    #page-info {
+        display: inline-block;
+        min-width: 100px;
+        font-weight: 500;
     }
   `;
 }
 
-/**
- * Returns the client-side JavaScript as a string
- */
 function getJavaScript() {
   return `
     document.addEventListener('DOMContentLoaded', () => {
       const quizContainer = document.getElementById('quiz-container');
       const categoryFilter = document.getElementById('category-filter');
+      const paginationContainer = document.getElementById('pagination-container');
       
-      // --- Setup Filter Dropdown ---
+      let allQuestions = [];
+      let currentPage = 1;
+      const questionsPerPage = 15;
+
       function setupFilters() {
         const categories = [...new Set(questionsData.map(q => q.category))];
-        categories.sort(); // Sort categories alphabetically
+        categories.sort((a, b) => a.localeCompare(b, 'el'));
         
-        // Add the default, disabled option first
-        categoryFilter.innerHTML = \`<option value="" selected disabled>Select a Subject...</option>\`;
+        categoryFilter.innerHTML = '<option value="" selected disabled>Select a Subject...</option>';
         
-        // Add all other categories
         categories.forEach(c => {
             const option = document.createElement('option');
             option.value = c;
@@ -275,21 +299,18 @@ function getJavaScript() {
         });
       }
 
-      // --- Render Questions for a Selected Category ---
-      function renderQuestions(selectedCategory) {
-        // Clear previous questions
+      function renderQuestions() {
         quizContainer.innerHTML = '';
-        
-        // Find questions that match the selected category
-        const filteredQuestions = questionsData.filter(q => q.category === selectedCategory);
+        const startIndex = (currentPage - 1) * questionsPerPage;
+        const endIndex = startIndex + questionsPerPage;
+        const paginatedQuestions = allQuestions.slice(startIndex, endIndex);
 
-        if (filteredQuestions.length === 0) {
-            quizContainer.innerHTML = '<p class="initial-prompt">No questions found for this subject.</p>';
+        if (paginatedQuestions.length === 0) {
+            quizContainer.innerHTML = '<div class="initial-prompt"><h2>No questions found for this subject.</h2></div>';
             return;
         }
         
-        // Create and append a card for each question
-        filteredQuestions.forEach(q => {
+        paginatedQuestions.forEach(q => {
           const card = document.createElement('div');
           card.className = 'question-card';
           
@@ -310,38 +331,64 @@ function getJavaScript() {
           quizContainer.appendChild(card);
         });
       }
-
-      // --- Event Listeners ---
       
-      // When the user changes the selected subject in the dropdown
+      function setupPagination() {
+          paginationContainer.innerHTML = '';
+          const pageCount = Math.ceil(allQuestions.length / questionsPerPage);
+          
+          if (pageCount <= 1) return;
+
+          const prevButton = document.createElement('button');
+          prevButton.id = 'prev-btn';
+          prevButton.textContent = 'Previous';
+          prevButton.disabled = currentPage === 1;
+
+          const nextButton = document.createElement('button');
+          nextButton.id = 'next-btn';
+          nextButton.textContent = 'Next';
+          nextButton.disabled = currentPage === pageCount;
+
+          const pageInfo = document.createElement('span');
+          pageInfo.id = 'page-info';
+          pageInfo.textContent = \`Page \${currentPage} of \${pageCount}\`;
+
+          paginationContainer.append(prevButton, pageInfo, nextButton);
+      }
+
       categoryFilter.addEventListener('change', () => {
         const selectedCategory = categoryFilter.value;
         if (selectedCategory) {
-          renderQuestions(selectedCategory);
-        } else {
-          quizContainer.innerHTML = '<p class="initial-prompt">Please select a subject from the dropdown above.</p>';
+          allQuestions = questionsData.filter(q => q.category === selectedCategory);
+          currentPage = 1;
+          renderQuestions();
+          setupPagination();
         }
       });
+      
+      paginationContainer.addEventListener('click', (e) => {
+          if (e.target.id === 'next-btn' && !e.target.disabled) {
+              currentPage++;
+          } else if (e.target.id === 'prev-btn' && !e.target.disabled) {
+              currentPage--;
+          }
+          renderQuestions();
+          setupPagination();
+          window.scrollTo(0, 0);
+      });
 
-      // When the user clicks anywhere in the quiz area (to handle all "Show Answer" buttons)
       quizContainer.addEventListener('click', (e) => {
-        // Check if the clicked element is a show-answer button
         if (e.target.classList.contains('show-answer-btn')) {
           const btn = e.target;
-          const answerDiv = btn.nextElementSibling; // The .answer-reveal div
-
-          // Toggle visibility and button text
+          const answerDiv = btn.nextElementSibling;
           const isHidden = answerDiv.style.display === 'none' || answerDiv.style.display === '';
           answerDiv.style.display = isHidden ? 'block' : 'none';
           btn.textContent = isHidden ? 'Hide Answer' : 'Show Answer';
         }
       });
       
-      // --- Initial Page Load ---
       setupFilters();
     });
   `;
 }
 
-// Run the script
 main();
