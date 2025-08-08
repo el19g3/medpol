@@ -35,7 +35,7 @@ async function main() {
     fs.writeFileSync(`${outputDir}/style.css`, getCss());
     fs.writeFileSync(`${outputDir}/script.js`, getJavaScript());
 
-    console.log("✅ Successfully created your interactive quiz website in the 'dist' folder!");
+    console.log("✅ Successfully created your website in the 'dist' folder!");
 
   } catch (error) {
     console.error("❌ An error occurred:", error);
@@ -67,7 +67,7 @@ async function getDatabasePages() {
  * Processes the raw page data from Notion into a clean question format
  */
 function processPages(pages) {
-  // Helper functions to safely extract data from Notion's complex objects
+  // Helper functions to safely extract data
   const getText = (property) => property?.[0]?.plain_text || null;
   const getTitle = (property) => property?.[0]?.plain_text || null;
   const getSelect = (property) => property?.select?.name || null;
@@ -78,13 +78,13 @@ function processPages(pages) {
 
     // Collect all options that are not empty
     const options = [];
-    const optionPrefixes = ['Α', 'Β', 'Γ', 'Δ', 'Ε', 'ΣΤ'];
+    const optionPrefixes = ['Α.', 'Β.', 'Γ.', 'Δ.', 'Ε.', 'ΣΤ.'];
     const optionColumns = ['Επιλογή Α', 'Επιλογή Β', 'Επιλογή Γ', 'Επιλογή Δ', 'Επιλογή Ε', 'Επιλογή ΣΤ'];
     
     for (let i = 0; i < optionColumns.length; i++) {
         const optionText = getText(props[optionColumns[i]]?.rich_text);
         if (optionText) {
-            options.push({ letter: optionPrefixes[i], text: optionText });
+            options.push(`${optionPrefixes[i]} ${optionText}`);
         }
     }
     
@@ -98,22 +98,20 @@ function processPages(pages) {
     };
 
     return questionData;
-  }).filter(q => q.question && q.options.length > 0); // Only include questions that have text and options
+  }).filter(q => q.question && q.options.length > 0);
 }
 
 /**
  * Generates the main HTML file content
  */
 function generateHtml(questions) {
-  // We embed the question data directly into the HTML as a JSON object.
-  // The client-side JavaScript will use this data to build the quiz.
   return `
     <!DOCTYPE html>
     <html lang="el">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>MedPollaplis | Interactive Quiz</title>
+        <title>MedPollaplis | Medical Questions</title>
         <link rel="stylesheet" href="style.css">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -122,13 +120,15 @@ function generateHtml(questions) {
     <body>
         <div class="container">
             <header class="site-header">
-                <h1>MedPollaplis Quiz</h1>
+                <h1>MedPollaplis Questions</h1>
                 <div class="filter-container">
-                    <label for="category-filter">Filter by Subject:</label>
+                    <label for="category-filter">Select a Subject to Begin</label>
                     <select id="category-filter"></select>
                 </div>
             </header>
-            <main id="quiz-container"></main>
+            <main id="quiz-container">
+                <p class="initial-prompt">Please select a subject from the dropdown above.</p>
+            </main>
         </div>
         
         <script>
@@ -151,10 +151,7 @@ function getCss() {
       --text-color: #2c3e50;
       --primary-color: #3498db;
       --light-gray: #e1e5e8;
-      --correct-color: #2ecc71;
-      --incorrect-color: #e74c3c;
-      --correct-bg: #e9f9f0;
-      --incorrect-bg: #fbecec;
+      --accent-color: #2ecc71;
     }
     body {
       background-color: var(--background-color);
@@ -174,17 +171,25 @@ function getCss() {
       border-bottom: 1px solid var(--light-gray);
     }
     .site-header h1 {
-      color: var(--primary-color);
-      margin: 0;
+      margin: 0 0 1rem 0;
     }
-    .filter-container {
-      margin-top: 1rem;
+    .filter-container label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
     }
     #category-filter {
       padding: 0.5rem;
       border-radius: 6px;
       border: 1px solid var(--light-gray);
       font-size: 1rem;
+      min-width: 250px;
+    }
+    .initial-prompt {
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 1.2rem;
+        padding: 3rem 0;
     }
     .question-card {
       background-color: var(--card-background);
@@ -193,9 +198,6 @@ function getCss() {
       margin-bottom: 1.5rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       border: 1px solid var(--light-gray);
-    }
-    .question-card[data-answered="true"] .option {
-        cursor: not-allowed;
     }
     .question-text {
       font-size: 1.2rem;
@@ -206,55 +208,43 @@ function getCss() {
     .options-list {
       list-style: none;
       padding: 0;
-      margin: 0;
+      margin: 0 0 1.5rem 0;
     }
-    .option {
-      display: flex;
-      align-items: center;
-      padding: 0.75rem;
-      border: 1px solid var(--light-gray);
-      border-radius: 8px;
+    .options-list li {
       margin-bottom: 0.5rem;
-      cursor: pointer;
-      transition: background-color 0.2s ease, border-color 0.2s ease;
+      line-height: 1.6;
+      padding: 0.5rem;
+      border-left: 3px solid var(--light-gray);
     }
-    .option:hover {
-      background-color: #eef6fc;
-      border-color: var(--primary-color);
-    }
-    .option-letter {
-      background-color: var(--primary-color);
-      color: white;
-      font-weight: 700;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      margin-right: 1rem;
-      flex-shrink: 0;
-    }
-    .option.correct {
-        background-color: var(--correct-bg);
-        border-color: var(--correct-color);
+    .show-answer-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
         font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
     }
-    .option.incorrect {
-        background-color: var(--incorrect-bg);
-        border-color: var(--incorrect-color);
+    .show-answer-btn:hover {
+        background-color: #2980b9;
     }
-    .justification {
-      background-color: var(--background-color);
-      border-left: 4px solid var(--primary-color);
+    .answer-reveal {
+      background-color: #ecf0f1;
+      border-left: 4px solid var(--accent-color);
       padding: 1rem;
       margin-top: 1.5rem;
       border-radius: 0 8px 8px 0;
-      display: none; /* Initially hidden */
+      display: none; /* Hidden by default */
     }
-    .justification p {
+    .answer-reveal p {
       margin: 0;
       line-height: 1.7;
+    }
+    .answer-reveal p:first-child {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
     }
   `;
 }
@@ -267,81 +257,88 @@ function getJavaScript() {
     document.addEventListener('DOMContentLoaded', () => {
       const quizContainer = document.getElementById('quiz-container');
       const categoryFilter = document.getElementById('category-filter');
-      let currentCategory = 'all';
-
+      
+      // --- Setup Filter Dropdown ---
       function setupFilters() {
-        const categories = ['All Subjects', ...new Set(questionsData.map(q => q.category))];
-        categoryFilter.innerHTML = categories.map(c => \`<option value="\${c}">\${c}</option>\`).join('');
+        const categories = [...new Set(questionsData.map(q => q.category))];
+        categories.sort(); // Sort categories alphabetically
         
-        categoryFilter.addEventListener('change', (e) => {
-          currentCategory = e.target.value;
-          renderQuestions();
+        // Add the default, disabled option first
+        categoryFilter.innerHTML = \`<option value="" selected disabled>Select a Subject...</option>\`;
+        
+        // Add all other categories
+        categories.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c;
+            option.textContent = c;
+            categoryFilter.appendChild(option);
         });
       }
 
-      function renderQuestions() {
+      // --- Render Questions for a Selected Category ---
+      function renderQuestions(selectedCategory) {
+        // Clear previous questions
         quizContainer.innerHTML = '';
-        const filteredQuestions = questionsData.filter(q => currentCategory === 'All Subjects' || q.category === currentCategory);
+        
+        // Find questions that match the selected category
+        const filteredQuestions = questionsData.filter(q => q.category === selectedCategory);
 
+        if (filteredQuestions.length === 0) {
+            quizContainer.innerHTML = '<p class="initial-prompt">No questions found for this subject.</p>';
+            return;
+        }
+        
+        // Create and append a card for each question
         filteredQuestions.forEach(q => {
           const card = document.createElement('div');
           card.className = 'question-card';
-          card.dataset.questionId = q.id;
-
-          const optionsHtml = q.options.map(opt => \`
-            <li class="option" data-letter="\${opt.letter}">
-              <span class="option-letter">\${opt.letter}</span>
-              <span class="option-text">\${opt.text}</span>
-            </li>
-          \`).join('');
+          
+          const optionsHtml = q.options.map(opt => \`<li>\${opt}</li>\`).join('');
+          
+          const answerHtml = \`
+            <p>Correct Answer(s): \${q.correctAnswers.join(', ')}</p>
+            \${q.justification ? \`<p>\${q.justification}</p>\` : ''}
+          \`;
 
           card.innerHTML = \`
             <p class="question-text">\${q.question}</p>
             <ul class="options-list">\${optionsHtml}</ul>
-            \${q.justification ? \`<div class="justification"><p>\${q.justification}</p></div>\` : ''}
+            <button class="show-answer-btn">Show Answer</button>
+            <div class="answer-reveal">\${answerHtml}</div>
           \`;
 
           quizContainer.appendChild(card);
         });
       }
 
-      quizContainer.addEventListener('click', (e) => {
-        const selectedOption = e.target.closest('.option');
-        if (!selectedOption) return;
-
-        const parentCard = selectedOption.closest('.question-card');
-        if (parentCard.dataset.answered === 'true') return;
-
-        parentCard.dataset.answered = 'true';
-
-        const questionId = parentCard.dataset.questionId;
-        const question = questionsData.find(q => q.id === questionId);
-        const selectedLetter = selectedOption.dataset.letter;
-
-        // Check if the answer is correct
-        if (question.correctAnswers.includes(selectedLetter)) {
-          selectedOption.classList.add('correct');
+      // --- Event Listeners ---
+      
+      // When the user changes the selected subject in the dropdown
+      categoryFilter.addEventListener('change', () => {
+        const selectedCategory = categoryFilter.value;
+        if (selectedCategory) {
+          renderQuestions(selectedCategory);
         } else {
-          selectedOption.classList.add('incorrect');
+          quizContainer.innerHTML = '<p class="initial-prompt">Please select a subject from the dropdown above.</p>';
         }
+      });
 
-        // Highlight all correct answers
-        parentCard.querySelectorAll('.option').forEach(opt => {
-          if (question.correctAnswers.includes(opt.dataset.letter)) {
-            opt.classList.add('correct');
-          }
-        });
+      // When the user clicks anywhere in the quiz area (to handle all "Show Answer" buttons)
+      quizContainer.addEventListener('click', (e) => {
+        // Check if the clicked element is a show-answer button
+        if (e.target.classList.contains('show-answer-btn')) {
+          const btn = e.target;
+          const answerDiv = btn.nextElementSibling; // The .answer-reveal div
 
-        // Show justification if it exists
-        const justificationEl = parentCard.querySelector('.justification');
-        if (justificationEl) {
-          justificationEl.style.display = 'block';
+          // Toggle visibility and button text
+          const isHidden = answerDiv.style.display === 'none' || answerDiv.style.display === '';
+          answerDiv.style.display = isHidden ? 'block' : 'none';
+          btn.textContent = isHidden ? 'Hide Answer' : 'Show Answer';
         }
       });
       
-      // Initial setup
+      // --- Initial Page Load ---
       setupFilters();
-      renderQuestions();
     });
   `;
 }
