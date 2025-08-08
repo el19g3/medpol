@@ -1,4 +1,4 @@
-// build.js - Final Version with Enhanced Aesthetics
+// build.js - Final Version with Final Aesthetics
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -100,7 +100,9 @@ function generateHtml(questions) {
     <body>
         <div class="app-container">
             <header class="site-header">
-                <div class="logo">MedPollaplis</div>
+                <a href="./" class="logo-link">
+                    <div class="logo">MedPollaplis</div>
+                </a>
                 <div class="controls-container">
                     <div class="search-wrapper">
                          <input type="search" id="search-bar" placeholder="Search in this subject...">
@@ -157,6 +159,7 @@ function getCss() {
       /* Default Theme: Clinical & Focused */
       --background-color: #f8f9fa;
       --card-background: linear-gradient(145deg, #ffffff, #f7f9fc);
+      --card-background-solid: #ffffff;
       --card-hover: linear-gradient(145deg, #f7f9fc, #ffffff);
       --text-color: #495057;
       --heading-color: #212529;
@@ -175,6 +178,7 @@ function getCss() {
     body[data-theme="academic"] {
       --background-color: #fdfdfd;
       --card-background: linear-gradient(145deg, #ffffff, #fbfcfd);
+      --card-background-solid: #ffffff;
       --card-hover: linear-gradient(145deg, #fbfcfd, #ffffff);
       --text-color: #455a64;
       --heading-color: #37474f;
@@ -189,6 +193,7 @@ function getCss() {
     body[data-theme="dark"] {
       --background-color: #000000;
       --card-background: linear-gradient(145deg, #2a2e33, #212529);
+      --card-background-solid: #2a2e33;
       --card-hover: linear-gradient(145deg, #212529, #2a2e33);
       --text-color: #b0bec5;
       --heading-color: #e9ecef;
@@ -202,6 +207,11 @@ function getCss() {
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes textGlow {
+        0% { text-shadow: 0 0 5px color-mix(in srgb, var(--primary-color) 20%, transparent); }
+        50% { text-shadow: 0 0 20px color-mix(in srgb, var(--primary-color) 40%, transparent); }
+        100% { text-shadow: 0 0 5px color-mix(in srgb, var(--primary-color) 20%, transparent); }
     }
     body {
       background-color: var(--background-color);
@@ -217,7 +227,7 @@ function getCss() {
       min-height: 100vh;
     }
     .site-header {
-      background-color: var(--card-background);
+      background-color: var(--card-background-solid);
       padding: 1.25rem 2.5rem;
       display: flex;
       justify-content: space-between;
@@ -228,12 +238,18 @@ function getCss() {
       z-index: 100;
       transition: background-color 0.3s, border-color 0.3s;
     }
+    .logo-link {
+        text-decoration: none;
+    }
     .logo {
       font-family: var(--font-secondary);
       font-size: 1.6rem;
       font-weight: 700;
       color: var(--heading-color);
       transition: color 0.3s;
+    }
+    .logo:hover {
+        animation: textGlow 2s infinite;
     }
     .controls-container {
         display: flex;
@@ -265,12 +281,12 @@ function getCss() {
       font-size: 1rem;
       font-family: var(--font-primary);
       min-width: 280px;
-      background-color: var(--card-background);
+      background-color: var(--card-background-solid);
       color: var(--text-color);
       transition: all 0.3s;
     }
     .toolbar {
-        background-color: color-mix(in srgb, var(--background-color) 50%, var(--card-background) 50%);
+        background-color: color-mix(in srgb, var(--background-color) 50%, var(--card-background-solid) 50%);
         padding: 0.75rem 2.5rem;
         border-bottom: 1px solid var(--light-gray);
         display: flex;
@@ -282,7 +298,7 @@ function getCss() {
     .toolbar-btn {
         padding: 0.6rem 1.2rem;
         border: 1px solid var(--light-gray);
-        background-color: var(--card-background);
+        background-color: var(--card-background-solid);
         color: var(--text-color);
         font-weight: 500;
         cursor: pointer;
@@ -303,7 +319,7 @@ function getCss() {
         padding: 0.6rem;
         border-radius: 8px;
         border: 1px solid var(--light-gray);
-        background-color: var(--card-background);
+        background-color: var(--card-background-solid);
         color: var(--text-color);
     }
     main {
@@ -399,7 +415,7 @@ function getCss() {
         box-shadow: 0 4px 8px color-mix(in srgb, var(--primary-color) 30%, transparent);
     }
     .answer-reveal {
-      background-color: color-mix(in srgb, var(--background-color) 50%, var(--card-background) 50%);
+      background-color: color-mix(in srgb, var(--background-color) 50%, var(--card-background-solid) 50%);
       border-left: 4px solid var(--accent-color);
       padding: 1.5rem;
       margin-top: 2rem;
@@ -413,7 +429,7 @@ function getCss() {
         text-align: center;
     }
     .pagination-controls button {
-        background-color: var(--card-background);
+        background-color: var(--card-background-solid);
         color: var(--primary-color);
         border: 1px solid var(--light-gray);
         padding: 0.75rem 1.5rem;
@@ -443,7 +459,7 @@ function getCss() {
         background-color: #343a40;
         color: #f8f9fa;
         text-align: center;
-        padding: 1.5rem;
+        padding: 1rem;
         margin-top: 2rem;
         display: flex;
         justify-content: center;
