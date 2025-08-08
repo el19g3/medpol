@@ -6,7 +6,7 @@
       
       let allQuestions = [];
       let currentPage = 1;
-      const questionsPerPage = 20;
+      const questionsPerPage = 15;
 
       function setupFilters() {
         const categories = [...new Set(questionsData.map(q => q.category))];

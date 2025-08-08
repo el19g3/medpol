@@ -1,10 +1,9 @@
-// build.js - Final Version
+// build.js - Final Version based on full data structure
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
 require("dotenv").config();
 
-// Initialize the Notion client with your API key
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const databaseId = process.env.NOTION_DATABASE_ID;
 
@@ -15,7 +14,7 @@ async function main() {
     const questions = processPages(pages);
 
     if (questions.length === 0) {
-      console.warn("⚠️ No questions were processed. Please double-check your Notion column names match the names in this script.");
+      console.warn("⚠️ No questions were processed. This might happen if all your questions are missing a title ('Εκφώνηση').");
       return;
     }
     
@@ -53,37 +52,39 @@ async function getDatabasePages() {
 }
 
 function processPages(pages) {
-  const getText = (property) => property?.[0]?.plain_text || null;
-  const getTitle = (property) => property?.[0]?.plain_text || null;
-  const getSelect = (property) => property?.select?.name || null;
-  const getMultiSelect = (property) => property?.map(opt => opt.name) || [];
+    // These helper functions are now tailored to your exact data structure
+    const getRichText = (property) => property?.rich_text?.[0]?.plain_text || null;
+    const getTitle = (property) => property?.title?.[0]?.plain_text || null;
+    const getSelect = (property) => property?.select?.name || null;
+    const getMultiSelect = (property) => property?.multi_select?.map(opt => opt.name) || [];
 
-  return pages.map(page => {
-    const props = page.properties;
-    
-    const options = [];
-    const optionColumns = ['Επιλογή Α', 'Επιλογή Β', 'Επιλογή Γ', 'Επιλογή Δ', 'Επιλογή Ε', 'Επιλογή ΣΤ'];
-    
-    for (const columnName of optionColumns) {
-        const optionText = getText(props[columnName]?.rich_text);
-        if (optionText) {
-            options.push(optionText);
+    return pages.map(page => {
+        const props = page.properties;
+        
+        const options = [];
+        const optionColumns = ['Επιλογή Α', 'Επιλογή Β', 'Επιλογή Γ', 'Επιλογή Δ', 'Επιλογή Ε', 'Επιλογή ΣΤ'];
+        
+        for (const columnName of optionColumns) {
+            // THE FIX IS HERE: We now use getRichText for the option columns.
+            const optionText = getRichText(props[columnName]);
+            if (optionText) {
+                options.push(optionText);
+            }
         }
-    }
-    
-    const questionData = {
-      id: page.id,
-      question: getTitle(props["Εκφώνηση"]?.title),
-      options: options,
-      // THE FIX IS HERE: Using the correct property name from the debug log.
-      correctAnswers: getMultiSelect(props["Σωστή απάντηση"]?.multi_select),
-      justification: getText(props["Αιτιολόγηση"]?.rich_text),
-      category: getSelect(props["Μάθημα"]?.select) || "Uncategorized"
-    };
+        
+        const questionData = {
+            id: page.id,
+            question: getTitle(props["Εκφώνηση"]),
+            options: options,
+            correctAnswers: getMultiSelect(props["Σωστή απάντηση"]),
+            justification: getRichText(props["Αιτιολόγηση"]),
+            category: getSelect(props["Μάθημα"]) || "Uncategorized"
+        };
 
-    return questionData;
-  }).filter(q => q.question && q.options.length > 0);
+        return questionData;
+    }).filter(q => q.question && q.options.length > 0);
 }
+
 
 function generateHtml(questions) {
   return `
@@ -392,4 +393,5 @@ function getJavaScript() {
   `;
 }
 
+// Run the script
 main();
