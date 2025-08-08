@@ -1,4 +1,4 @@
-// build.js - Final Version with Final Aesthetics
+// build.js - Final Version with Custom Logo
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -23,6 +23,14 @@ async function main() {
     const outputDir = './dist';
     if (!fs.existsSync(outputDir)){
         fs.mkdirSync(outputDir);
+    }
+
+    // Copy the logo file from the assets folder to the dist folder
+    if (fs.existsSync('assets/logo.svg')) {
+        fs.copyFileSync('assets/logo.svg', `${outputDir}/logo.svg`);
+        console.log("✅ Logo file copied successfully.");
+    } else {
+        console.warn("⚠️ Warning: 'assets/logo.svg' not found. The logo will not be displayed. Make sure it's saved in the 'assets' folder.");
     }
 
     fs.writeFileSync(`${outputDir}/index.html`, generateHtml(questions));
@@ -91,7 +99,7 @@ function generateHtml(questions) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>MedPollaplis | Medical Questions</title>
+        <title>MedPollaplis Plus</title>
         <link rel="stylesheet" href="style.css">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -101,7 +109,8 @@ function generateHtml(questions) {
         <div class="app-container">
             <header class="site-header">
                 <a href="./" class="logo-link">
-                    <div class="logo">MedPollaplis</div>
+                    <img src="logo.svg" alt="MedPollaplis Logo" class="logo-icon">
+                    <div class="logo">MedPollaplis+</div>
                 </a>
                 <div class="controls-container">
                     <div class="search-wrapper">
@@ -240,6 +249,13 @@ function getCss() {
     }
     .logo-link {
         text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .logo-icon {
+        height: 32px;
+        width: 32px;
     }
     .logo {
       font-family: var(--font-secondary);
@@ -248,7 +264,7 @@ function getCss() {
       color: var(--heading-color);
       transition: color 0.3s;
     }
-    .logo:hover {
+    .logo-link:hover .logo {
         animation: textGlow 2s infinite;
     }
     .controls-container {
