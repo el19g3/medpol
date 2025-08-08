@@ -115,7 +115,7 @@ function generateHtml(questions) {
                 </a>
                 <div class="controls-container">
                     <div class="search-wrapper">
-                         <input type="search" id="search-bar" placeholder="Search in this subject...">
+                         <input type="search" id="search-bar" placeholder="Search in this course...">
                     </div>
                     <select id="category-filter"></select>
                 </div>
@@ -139,7 +139,7 @@ function generateHtml(questions) {
             <main id="quiz-container">
                 <div class="initial-prompt">
                     <h2>Welcome!</h2>
-                    <p>Please select a subject from the dropdown menu above to begin.</p>
+                    <p>Please select a course from the dropdown menu above to begin.</p>
                 </div>
             </main>
             <div id="pagination-container"></div>
@@ -595,7 +595,7 @@ function getJavaScript() {
             return a.localeCompare(b, 'el');
         });
         
-        categoryFilter.innerHTML = '<option value="" selected disabled>Select a Subject...</option>';
+        categoryFilter.innerHTML = '<option value="" selected disabled>Select a course...</option>';
         
         categories.forEach(c => {
             const option = document.createElement('option');
@@ -613,7 +613,7 @@ function getJavaScript() {
         const paginatedQuestions = currentQuestions.slice(startIndex, endIndex);
 
         if (paginatedQuestions.length === 0) {
-            quizContainer.innerHTML = '<div class="initial-prompt"><h2>No questions found.</h2><p>Try a different subject or clear your search.</p></div>';
+            quizContainer.innerHTML = '<div class="initial-prompt"><h2>No questions found.</h2><p>Try a different course or clear your search.</p></div>';
             paginationContainer.innerHTML = '';
             return;
         }
