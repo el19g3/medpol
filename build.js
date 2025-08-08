@@ -1,4 +1,4 @@
-// build.js - Final Version with Theme Switcher
+// build.js - Final Version with Enhanced Aesthetics
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -156,7 +156,8 @@ function getCss() {
     :root {
       /* Default Theme: Clinical & Focused */
       --background-color: #f8f9fa;
-      --card-background: #ffffff;
+      --card-background: linear-gradient(145deg, #ffffff, #f7f9fc);
+      --card-hover: linear-gradient(145deg, #f7f9fc, #ffffff);
       --text-color: #495057;
       --heading-color: #212529;
       --primary-color: #4c6ef5;
@@ -173,7 +174,8 @@ function getCss() {
     /* Academic Theme */
     body[data-theme="academic"] {
       --background-color: #fdfdfd;
-      --card-background: #ffffff;
+      --card-background: linear-gradient(145deg, #ffffff, #fbfcfd);
+      --card-hover: linear-gradient(145deg, #fbfcfd, #ffffff);
       --text-color: #455a64;
       --heading-color: #37474f;
       --primary-color: #00796b;
@@ -185,14 +187,15 @@ function getCss() {
 
     /* Dark Theme */
     body[data-theme="dark"] {
-      --background-color: #1d2125;
-      --card-background: #2a2e33;
+      --background-color: #000000;
+      --card-background: linear-gradient(145deg, #2a2e33, #212529);
+      --card-hover: linear-gradient(145deg, #212529, #2a2e33);
       --text-color: #b0bec5;
-      --heading-color: #e0e0e0;
-      --primary-color: #4c9aff;
-      --primary-hover: #6babff;
-      --light-gray: #454c52;
-      --accent-color: #36b37e;
+      --heading-color: #e9ecef;
+      --primary-color: #4dabf7;
+      --primary-hover: #74c0fc;
+      --light-gray: #495057;
+      --accent-color: #20c997;
       --flag-color: #ffc400;
     }
 
@@ -322,14 +325,18 @@ function getCss() {
         font-size: 2rem;
     }
     .question-card {
-      background-color: var(--card-background);
+      background: var(--card-background);
       border-radius: var(--border-radius);
       padding: 2.5rem;
       margin-bottom: 2rem;
       box-shadow: var(--shadow);
       position: relative;
       animation: fadeIn 0.5s ease-out forwards;
-      transition: background-color 0.3s;
+      transition: background 0.4s, transform 0.2s;
+    }
+    .question-card:hover {
+        background: var(--card-hover);
+        transform: translateY(-4px);
     }
     .flag-btn {
         position: absolute;
@@ -460,6 +467,52 @@ function getCss() {
     }
     .theme-dot.active {
         box-shadow: 0 0 0 3px var(--primary-color);
+    }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 768px) {
+        .site-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        .controls-container {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+        }
+        #search-bar, #category-filter {
+            min-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        main {
+            padding: 1.5rem 1rem;
+        }
+        .question-card {
+            padding: 1.5rem;
+        }
+        .question-text {
+            font-size: 1.2rem;
+        }
+        .site-footer-main {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .pagination-controls button {
+            padding: 0.6rem 1rem;
+        }
+        #page-info {
+            display: block;
+            margin: 0.5rem 0;
+        }
     }
   `;
 }
