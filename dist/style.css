@@ -1,0 +1,147 @@
+
+    :root {
+      --background-color: #f0f2f5;
+      --card-background: #ffffff;
+      --text-color: #333d47;
+      --heading-color: #1a2c42;
+      --primary-color: #007aff;
+      --light-gray: #dce1e6;
+      --accent-color: #34c759;
+      --border-radius: 12px;
+      --shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
+    }
+    body {
+      background-color: var(--background-color);
+      color: var(--text-color);
+      font-family: 'Lato', sans-serif;
+      margin: 0;
+    }
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .site-header {
+      background-color: var(--card-background);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--light-gray);
+      box-shadow: var(--shadow);
+    }
+    .logo {
+      font-family: 'Roboto Slab', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--heading-color);
+    }
+    .filter-container label {
+      display: none;
+    }
+    #category-filter {
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--light-gray);
+      font-size: 1rem;
+      font-family: 'Lato', sans-serif;
+      min-width: 250px;
+      background-color: #f8f9fa;
+    }
+    main {
+      flex: 1;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      box-sizing: border-box;
+    }
+    .initial-prompt {
+        text-align: center;
+        color: #6c757d;
+        padding: 4rem 0;
+    }
+    .initial-prompt h2 {
+        font-family: 'Roboto Slab', serif;
+    }
+    .question-card {
+      background-color: var(--card-background);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--light-gray);
+    }
+    .question-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-family: 'Roboto Slab', serif;
+      color: var(--heading-color);
+      margin: 0 0 1.5rem 0;
+      line-height: 1.5;
+    }
+    .options-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.5rem 0;
+    }
+    .options-list li {
+      margin-bottom: 0.75rem;
+      line-height: 1.6;
+      padding: 0.5rem;
+    }
+    .show-answer-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.6rem;
+        font-size: 1rem;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+    .show-answer-btn:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+    .answer-reveal {
+      background-color: #e9f5ff;
+      border-left: 4px solid var(--primary-color);
+      padding: 1.25rem;
+      margin-top: 1.5rem;
+      border-radius: 0 8px 8px 0;
+      display: none; /* Hidden by default */
+    }
+    .answer-reveal p { margin: 0; line-height: 1.7; }
+    .answer-reveal p:first-child { font-weight: bold; margin-bottom: 0.75rem; color: var(--heading-color); }
+    footer {
+        padding: 2rem;
+        text-align: center;
+    }
+    .pagination-controls button {
+        background-color: var(--card-background);
+        color: var(--primary-color);
+        border: 1px solid var(--light-gray);
+        padding: 0.6rem 1.2rem;
+        margin: 0 0.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .pagination-controls button:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    .pagination-controls button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    #page-info {
+        display: inline-block;
+        min-width: 100px;
+        font-weight: 500;
+    }
+  

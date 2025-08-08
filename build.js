@@ -1,4 +1,4 @@
-// build.js
+// build.js - Final Version
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -15,7 +15,7 @@ async function main() {
     const questions = processPages(pages);
 
     if (questions.length === 0) {
-      console.warn("⚠️ No questions were processed. Please double-check that your Notion column names for 'Εκφώνηση', 'Μάθημα', and 'Σωστή/ές απάντηση/εις' exactly match the names in this script.");
+      console.warn("⚠️ No questions were processed. Please double-check your Notion column names match the names in this script.");
       return;
     }
     
@@ -60,27 +60,28 @@ function processPages(pages) {
 
   return pages.map(page => {
     const props = page.properties;
+    
     const options = [];
     const optionColumns = ['Επιλογή Α', 'Επιλογή Β', 'Επιλογή Γ', 'Επιλογή Δ', 'Επιλογή Ε', 'Επιλογή ΣΤ'];
     
     for (const columnName of optionColumns) {
         const optionText = getText(props[columnName]?.rich_text);
         if (optionText) {
-            // FIX: Removed the logic that added a duplicate prefix. We now use the text directly from Notion.
             options.push(optionText);
         }
     }
     
-    return {
+    const questionData = {
       id: page.id,
       question: getTitle(props["Εκφώνηση"]?.title),
       options: options,
-      // CRITICAL: Ensure your Notion column is named exactly "Σωστή/ές απάντηση/εις"
+      // THE FIX IS HERE: Using the correct property name from the debug log.
       correctAnswers: getMultiSelect(props["Σωστή απάντηση"]?.multi_select),
       justification: getText(props["Αιτιολόγηση"]?.rich_text),
-      // CRITICAL: Ensure your Notion column is named exactly "Μάθημα"
       category: getSelect(props["Μάθημα"]?.select) || "Uncategorized"
     };
+
+    return questionData;
   }).filter(q => q.question && q.options.length > 0);
 }
 
