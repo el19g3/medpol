@@ -76,7 +76,7 @@ function processPages(pages) {
       question: getTitle(props["Εκφώνηση"]?.title),
       options: options,
       // CRITICAL: Ensure your Notion column is named exactly "Σωστή/ές απάντηση/εις"
-      correctAnswers: getMultiSelect(props["Σωστή/ές απάντηση/εις"]?.multi_select),
+      correctAnswers: getMultiSelect(props["Σωστή απάντηση"]?.multi_select),
       justification: getText(props["Αιτιολόγηση"]?.rich_text),
       // CRITICAL: Ensure your Notion column is named exactly "Μάθημα"
       category: getSelect(props["Μάθημα"]?.select) || "Uncategorized"
