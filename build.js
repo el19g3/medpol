@@ -1,4 +1,4 @@
-// build.js - Final Version with Aesthetic Overhaul
+// build.js - Final Version with Theme Switcher
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -133,6 +133,11 @@ function generateHtml(questions) {
             <div id="pagination-container"></div>
             <footer class="site-footer-main">
                 <p>MedPollaplis Study Tool</p>
+                <div class="theme-switcher">
+                    <button class="theme-dot" data-theme="default" title="Default Theme" style="background-color: #4c6ef5;"></button>
+                    <button class="theme-dot" data-theme="academic" title="Academic Theme" style="background-color: #00796b;"></button>
+                    <button class="theme-dot" data-theme="dark" title="Dark Theme" style="background-color: #1d2125;"></button>
+                </div>
             </footer>
         </div>
         
@@ -149,6 +154,7 @@ function generateHtml(questions) {
 function getCss() {
   return `
     :root {
+      /* Default Theme: Clinical & Focused */
       --background-color: #f8f9fa;
       --card-background: #ffffff;
       --text-color: #495057;
@@ -163,6 +169,33 @@ function getCss() {
       --font-primary: 'Inter', sans-serif;
       --font-secondary: 'Roboto Slab', serif;
     }
+
+    /* Academic Theme */
+    body[data-theme="academic"] {
+      --background-color: #fdfdfd;
+      --card-background: #ffffff;
+      --text-color: #455a64;
+      --heading-color: #37474f;
+      --primary-color: #00796b;
+      --primary-hover: #00695c;
+      --light-gray: #eceff1;
+      --accent-color: #d84315;
+      --flag-color: #fdd835;
+    }
+
+    /* Dark Theme */
+    body[data-theme="dark"] {
+      --background-color: #1d2125;
+      --card-background: #2a2e33;
+      --text-color: #b0bec5;
+      --heading-color: #e0e0e0;
+      --primary-color: #4c9aff;
+      --primary-hover: #6babff;
+      --light-gray: #454c52;
+      --accent-color: #36b37e;
+      --flag-color: #ffc400;
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -173,6 +206,7 @@ function getCss() {
       font-family: var(--font-primary);
       margin: 0;
       line-height: 1.7;
+      transition: background-color 0.3s, color 0.3s;
     }
     .app-container {
       display: flex;
@@ -189,12 +223,14 @@ function getCss() {
       position: sticky;
       top: 0;
       z-index: 100;
+      transition: background-color 0.3s, border-color 0.3s;
     }
     .logo {
       font-family: var(--font-secondary);
       font-size: 1.6rem;
       font-weight: 700;
       color: var(--heading-color);
+      transition: color 0.3s;
     }
     .controls-container {
         display: flex;
@@ -210,12 +246,14 @@ function getCss() {
         border: 1px solid var(--light-gray);
         font-size: 1rem;
         min-width: 300px;
+        background-color: var(--background-color);
+        color: var(--text-color);
         transition: all 0.2s ease-in-out;
     }
     #search-bar:focus {
         outline: none;
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.2);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
     }
     #category-filter {
       padding: 0.75rem 1.25rem;
@@ -224,30 +262,33 @@ function getCss() {
       font-size: 1rem;
       font-family: var(--font-primary);
       min-width: 280px;
-      background-color: #fff;
+      background-color: var(--card-background);
+      color: var(--text-color);
+      transition: all 0.3s;
     }
     .toolbar {
-        background-color: #f1f3f5;
+        background-color: color-mix(in srgb, var(--background-color) 50%, var(--card-background) 50%);
         padding: 0.75rem 2.5rem;
         border-bottom: 1px solid var(--light-gray);
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 1rem;
+        transition: background-color 0.3s, border-color 0.3s;
     }
     .toolbar-btn {
         padding: 0.6rem 1.2rem;
         border: 1px solid var(--light-gray);
         background-color: var(--card-background);
-        color: #495057;
+        color: var(--text-color);
         font-weight: 500;
         cursor: pointer;
         border-radius: 8px;
         transition: all 0.2s;
     }
     .toolbar-btn:hover {
-        background-color: #e9ecef;
-        border-color: #ced4da;
+        background-color: color-mix(in srgb, var(--light-gray) 50%, transparent);
+        border-color: color-mix(in srgb, var(--text-color) 30%, transparent);
     }
     .toolbar-right {
         display: flex;
@@ -259,6 +300,8 @@ function getCss() {
         padding: 0.6rem;
         border-radius: 8px;
         border: 1px solid var(--light-gray);
+        background-color: var(--card-background);
+        color: var(--text-color);
     }
     main {
       flex: 1;
@@ -270,7 +313,7 @@ function getCss() {
     }
     .initial-prompt {
         text-align: center;
-        color: #868e96;
+        color: color-mix(in srgb, var(--text-color) 70%, transparent);
         padding: 5rem 0;
     }
     .initial-prompt h2 {
@@ -286,6 +329,7 @@ function getCss() {
       box-shadow: var(--shadow);
       position: relative;
       animation: fadeIn 0.5s ease-out forwards;
+      transition: background-color 0.3s;
     }
     .flag-btn {
         position: absolute;
@@ -299,7 +343,7 @@ function getCss() {
     .flag-btn svg {
         width: 24px;
         height: 24px;
-        stroke: #adb5bd;
+        stroke: color-mix(in srgb, var(--text-color) 50%, transparent);
         fill: none;
         transition: all 0.2s;
     }
@@ -345,10 +389,10 @@ function getCss() {
     .show-answer-btn:hover {
         background-color: var(--primary-hover);
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(76, 110, 245, 0.3);
+        box-shadow: 0 4px 8px color-mix(in srgb, var(--primary-color) 30%, transparent);
     }
     .answer-reveal {
-      background-color: #f1f3f5;
+      background-color: color-mix(in srgb, var(--background-color) 50%, var(--card-background) 50%);
       border-left: 4px solid var(--accent-color);
       padding: 1.5rem;
       margin-top: 2rem;
@@ -386,7 +430,7 @@ function getCss() {
         display: inline-block;
         min-width: 120px;
         font-weight: 500;
-        color: #5e6c84;
+        color: color-mix(in srgb, var(--text-color) 80%, transparent);
     }
     .site-footer-main {
         background-color: #343a40;
@@ -394,6 +438,28 @@ function getCss() {
         text-align: center;
         padding: 1.5rem;
         margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+    }
+    .theme-switcher {
+        display: flex;
+        gap: 0.75rem;
+    }
+    .theme-dot {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .theme-dot:hover {
+        transform: scale(1.1);
+    }
+    .theme-dot.active {
+        box-shadow: 0 0 0 3px var(--primary-color);
     }
   `;
 }
@@ -408,6 +474,7 @@ function getJavaScript() {
       const searchBar = document.getElementById('search-bar');
       const showAllAnswersBtn = document.getElementById('show-all-answers-btn');
       const questionsPerPageSelect = document.getElementById('questions-per-page');
+      const themeSwitcher = document.querySelector('.theme-switcher');
 
       // --- State Management ---
       let currentQuestions = [];
@@ -419,6 +486,20 @@ function getJavaScript() {
       const saveFlagged = () => localStorage.setItem('flaggedQuestions', JSON.stringify(flaggedQuestions));
       const isFlagged = (id) => flaggedQuestions.includes(id);
       
+      // --- Theme Functions ---
+      function applyTheme(themeName) {
+        document.body.dataset.theme = themeName;
+        localStorage.setItem('medpollaplis-theme', themeName);
+        themeSwitcher.querySelectorAll('.theme-dot').forEach(dot => {
+            dot.classList.toggle('active', dot.dataset.theme === themeName);
+        });
+      }
+
+      function loadTheme() {
+        const savedTheme = localStorage.getItem('medpollaplis-theme') || 'default';
+        applyTheme(savedTheme);
+      }
+
       // --- Setup ---
       function setupFilters() {
         const categories = ['Flagged for Review', ...new Set(questionsData.map(q => q.category))];
@@ -545,6 +626,12 @@ function getJavaScript() {
         showAllAnswersBtn.textContent = isShowingAll ? 'Show All Answers' : 'Hide All Answers';
       });
       
+      themeSwitcher.addEventListener('click', (e) => {
+        if (e.target.classList.contains('theme-dot')) {
+            applyTheme(e.target.dataset.theme);
+        }
+      });
+      
       paginationContainer.addEventListener('click', (e) => {
           const targetId = e.target.id;
           if (targetId === 'next-btn' && !e.target.disabled) currentPage++;
@@ -582,6 +669,7 @@ function getJavaScript() {
       });
       
       // --- Initial Page Load ---
+      loadTheme();
       setupFilters();
     });
   `;
