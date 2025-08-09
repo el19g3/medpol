@@ -1,4 +1,4 @@
-// build.js - Final Version with Final Aesthetics
+// build.js - Final Version with Analytics and Cookie Notice
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -107,6 +107,15 @@ function generateHtml(questions) {
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Slab:wght@500;700&display=swap" rel="stylesheet">
+        
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-X97CC3J36S"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          // We will call the config command after user consent
+        </script>
     </head>
     <body>
         <div class="app-container">
@@ -148,11 +157,16 @@ function generateHtml(questions) {
             <footer class="site-footer-main">
                 <p>MedPollaplis Study Tool</p>
                 <div class="theme-switcher">
-                    <button class="theme-dot" data-theme="default" title="white mode" style="background-color: #ffffff; border-color: #dee2e6;"></button>
+                    <button class="theme-dot" data-theme="default" title="light mode" style="background-color: #ffffff; border-color: #dee2e6;"></button>
                     <button class="theme-dot" data-theme="pastel" title="medpol legacy" style="background-color: #f2bac9;"></button>
                     <button class="theme-dot" data-theme="dark" title="dark mode" style="background-color: #1d2125;"></button>
                 </div>
             </footer>
+        </div>
+
+        <div id="cookie-banner" class="cookie-banner">
+            <p>This site uses cookies for analytics and local storage to save your preferences. By continuing, you consent to this.</p>
+            <button id="cookie-accept-btn">OK</button>
         </div>
         
         <script>
@@ -530,6 +544,38 @@ function getCss() {
     .theme-dot.active {
         box-shadow: 0 0 0 3px var(--primary-color);
     }
+    .cookie-banner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: var(--footer-background);
+        color: var(--footer-text-color);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+        z-index: 200;
+        transform: translateY(100%);
+        transition: transform 0.5s ease-in-out;
+    }
+    .cookie-banner.visible {
+        transform: translateY(0);
+    }
+    .cookie-banner p {
+        margin: 0;
+        padding-right: 1rem;
+    }
+    #cookie-accept-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
 
     /* --- MOBILE RESPONSIVENESS --- */
     @media (max-width: 768px) {
@@ -575,6 +621,11 @@ function getCss() {
             display: block;
             margin: 0.5rem 0;
         }
+        .cookie-banner {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
     }
   `;
 }
@@ -590,6 +641,8 @@ function getJavaScript() {
       const showAllAnswersBtn = document.getElementById('show-all-answers-btn');
       const questionsPerPageSelect = document.getElementById('questions-per-page');
       const themeSwitcher = document.querySelector('.theme-switcher');
+      const cookieBanner = document.getElementById('cookie-banner');
+      const cookieAcceptBtn = document.getElementById('cookie-accept-btn');
 
       // --- State Management ---
       let currentQuestions = [];
@@ -601,6 +654,22 @@ function getJavaScript() {
       const saveFlagged = () => localStorage.setItem('flaggedQuestions', JSON.stringify(flaggedQuestions));
       const isFlagged = (id) => flaggedQuestions.includes(id);
       
+      // --- Cookie & Analytics ---
+      function handleCookieConsent() {
+        const consent = localStorage.getItem('cookie-consent');
+        if (consent === 'true') {
+            gtag('config', 'G-X97CC3J36S');
+        } else {
+            cookieBanner.classList.add('visible');
+        }
+      }
+
+      cookieAcceptBtn.addEventListener('click', () => {
+        localStorage.setItem('cookie-consent', 'true');
+        cookieBanner.classList.remove('visible');
+        gtag('config', 'G-X97CC3J36S');
+      });
+
       // --- Theme Functions ---
       function applyTheme(themeName) {
         document.body.dataset.theme = themeName;
@@ -788,6 +857,7 @@ function getJavaScript() {
       // --- Initial Page Load ---
       loadTheme();
       setupFilters();
+      handleCookieConsent();
     });
   `;
 }
