@@ -208,15 +208,15 @@ function getCss() {
       --card-background: #f2bac9;
       --card-background-solid: #baf2d8;
       --card-hover: #f2e2ba;
-      --text-color: #423e40;
-      --heading-color: #312e2f;
+      --text-color: #212529;
+      --heading-color: #000000;
       --primary-color: #e677a2;
       --primary-hover: #d66792;
       --light-gray: #e9d9a8;
       --accent-color: #77b2e6;
       --flag-color: #f2d277;
       --footer-background: #baf2d8;
-      --footer-text-color: #312e2f;
+      --footer-text-color: #000000;
     }
 
     /* Dark Theme */
@@ -225,15 +225,15 @@ function getCss() {
       --card-background: linear-gradient(145deg, #2a2e33, #212529);
       --card-background-solid: #2a2e33;
       --card-hover: linear-gradient(145deg, #212529, #2a2e33);
-      --text-color: #b0bec5;
-      --heading-color: #e9ecef;
+      --text-color: #ced4da;
+      --heading-color: #f8f9fa;
       --primary-color: #4dabf7;
       --primary-hover: #74c0fc;
       --light-gray: #495057;
       --accent-color: #20c997;
       --flag-color: #ffc400;
       --footer-background: #171a1d;
-      --footer-text-color: #e9ecef;
+      --footer-text-color: #f8f9fa;
     }
 
     @keyframes fadeIn {
