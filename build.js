@@ -146,9 +146,9 @@ function generateHtml(questions) {
             <footer class="site-footer-main">
                 <p>MedPollaplis Study Tool</p>
                 <div class="theme-switcher">
-                    <button class="theme-dot" data-theme="default" title="Clinical Theme" style="background-color: #ffffff; border-color: #dee2e6;"></button>
-                    <button class="theme-dot" data-theme="pastel" title="Pastel Theme" style="background-color: #f2bac9;"></button>
-                    <button class="theme-dot" data-theme="dark" title="Dark Theme" style="background-color: #1d2125;"></button>
+                    <button class="theme-dot" data-theme="default" title="light mode" style="background-color: #ffffff; border-color: #dee2e6;"></button>
+                    <button class="theme-dot" data-theme="pastel" title="medpol legacy" style="background-color: #f2bac9;"></button>
+                    <button class="theme-dot" data-theme="dark" title="dark mode" style="background-color: #1d2125;"></button>
                 </div>
             </footer>
         </div>
@@ -422,9 +422,9 @@ function getCss() {
       border-left: 4px solid var(--light-gray);
     }
     .show-answer-btn {
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
+        background-color: #baf2d8;
+        color: var(--heading-color);
+        border: 1px solid color-mix(in srgb, var(--accent-color) 50%, transparent);
         padding: 0.8rem 1.8rem;
         font-size: 1rem;
         font-weight: 700;
@@ -433,9 +433,10 @@ function getCss() {
         transition: all 0.2s ease;
     }
     .show-answer-btn:hover {
-        background-color: var(--primary-hover);
+        background-color: var(--accent-color);
+        color: white;
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px color-mix(in srgb, var(--primary-color) 30%, transparent);
+        box-shadow: 0 4px 8px color-mix(in srgb, var(--accent-color) 30%, transparent);
     }
     .answer-reveal {
       background-color: color-mix(in srgb, var(--background-color) 50%, var(--card-background-solid) 50%);
