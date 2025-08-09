@@ -1,4 +1,4 @@
-// build.js - Final Version with Favicon
+// build.js - Final Version with Custom Palettes
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -146,8 +146,8 @@ function generateHtml(questions) {
             <footer class="site-footer-main">
                 <p>MedPollaplis Study Tool</p>
                 <div class="theme-switcher">
-                    <button class="theme-dot" data-theme="default" title="Default Theme" style="background-color: #4c6ef5;"></button>
-                    <button class="theme-dot" data-theme="academic" title="Academic Theme" style="background-color: #00796b;"></button>
+                    <button class="theme-dot" data-theme="default" title="Clinical Theme" style="background-color: #ffffff; border-color: #dee2e6;"></button>
+                    <button class="theme-dot" data-theme="pastel" title="Pastel Theme" style="background-color: #f2bac9;"></button>
                     <button class="theme-dot" data-theme="dark" title="Dark Theme" style="background-color: #1d2125;"></button>
                 </div>
             </footer>
@@ -178,25 +178,29 @@ function getCss() {
       --light-gray: #dee2e6;
       --accent-color: #12b886;
       --flag-color: #fcc419;
+      --footer-background: #343a40;
+      --footer-text-color: #f8f9fa;
       --border-radius: 12px;
       --shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
       --font-primary: 'Inter', sans-serif;
       --font-secondary: 'Roboto Slab', serif;
     }
 
-    /* Academic Theme */
-    body[data-theme="academic"] {
-      --background-color: #fdfdfd;
-      --card-background: linear-gradient(145deg, #ffffff, #fbfcfd);
-      --card-background-solid: #ffffff;
-      --card-hover: linear-gradient(145deg, #fbfcfd, #ffffff);
-      --text-color: #455a64;
-      --heading-color: #37474f;
-      --primary-color: #00796b;
-      --primary-hover: #00695c;
-      --light-gray: #eceff1;
-      --accent-color: #d84315;
-      --flag-color: #fdd835;
+    /* Pastel Theme (formerly Academic) */
+    body[data-theme="pastel"] {
+      --background-color: #bad7f2;
+      --card-background: #f2bac9;
+      --card-background-solid: #baf2d8;
+      --card-hover: #f2e2ba;
+      --text-color: #5c5457;
+      --heading-color: #4a4446;
+      --primary-color: #e677a2;
+      --primary-hover: #d66792;
+      --light-gray: #e9d9a8;
+      --accent-color: #77b2e6;
+      --flag-color: #f2d277;
+      --footer-background: #baf2d8;
+      --footer-text-color: #4a4446;
     }
 
     /* Dark Theme */
@@ -212,6 +216,8 @@ function getCss() {
       --light-gray: #495057;
       --accent-color: #20c997;
       --flag-color: #ffc400;
+      --footer-background: #171a1d;
+      --footer-text-color: #e9ecef;
     }
 
     @keyframes fadeIn {
@@ -473,8 +479,8 @@ function getCss() {
         color: color-mix(in srgb, var(--text-color) 80%, transparent);
     }
     .site-footer-main {
-        background-color: #343a40;
-        color: #f8f9fa;
+        background-color: var(--footer-background);
+        color: var(--footer-text-color);
         text-align: center;
         padding: 1rem;
         margin-top: 2rem;
@@ -482,6 +488,7 @@ function getCss() {
         justify-content: center;
         align-items: center;
         gap: 2rem;
+        transition: background-color 0.3s, color 0.3s;
     }
     .theme-switcher {
         display: flex;
@@ -494,6 +501,9 @@ function getCss() {
         border: 2px solid #fff;
         cursor: pointer;
         transition: transform 0.2s, box-shadow 0.2s;
+    }
+    body[data-theme="dark"] .theme-dot {
+        border-color: var(--heading-color);
     }
     .theme-dot:hover {
         transform: scale(1.1);
