@@ -1,4 +1,4 @@
-// build.js - Final Version with Image Support
+// build.js - Final Version with Final Aesthetics
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -64,7 +64,6 @@ function processPages(pages) {
     const getTitle = (property) => property?.title?.[0]?.plain_text || null;
     const getSelect = (property) => property?.select?.name || null;
     const getMultiSelect = (property) => property?.multi_select?.map(opt => opt.name) || [];
-    // New helper to get the URL from a Files property
     const getFileUrl = (property) => property?.files?.[0]?.file?.url || null;
 
     return pages.map(page => {
@@ -87,7 +86,6 @@ function processPages(pages) {
             correctAnswers: getMultiSelect(props["Σωστή απάντηση"]),
             justification: getRichText(props["Αιτιολόγηση"]),
             category: getSelect(props["Μάθημα"]) || "Uncategorized",
-            // Add the image URL to our question data
             imageUrl: getFileUrl(props["Εικόνα"])
         };
 
@@ -434,9 +432,9 @@ function getCss() {
       border-left: 4px solid var(--light-gray);
     }
     .show-answer-btn {
-        background-color: #baf2d8;
-        color: var(--heading-color);
-        border: 1px solid color-mix(in srgb, var(--accent-color) 50%, transparent);
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
         padding: 0.8rem 1.8rem;
         font-size: 1rem;
         font-weight: 700;
@@ -445,10 +443,18 @@ function getCss() {
         transition: all 0.2s ease;
     }
     .show-answer-btn:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px color-mix(in srgb, var(--primary-color) 30%, transparent);
+    }
+    body[data-theme="pastel"] .show-answer-btn {
+        background-color: #baf2d8;
+        color: var(--heading-color);
+        border: 1px solid color-mix(in srgb, var(--accent-color) 50%, transparent);
+    }
+    body[data-theme="pastel"] .show-answer-btn:hover {
         background-color: var(--accent-color);
         color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px color-mix(in srgb, var(--accent-color) 30%, transparent);
     }
     .answer-reveal {
       background-color: color-mix(in srgb, var(--background-color) 50%, var(--card-background-solid) 50%);
@@ -659,9 +665,9 @@ function getJavaScript() {
             <button class="flag-btn \${isFlagged(q.id) ? 'flagged' : ''}" title="Flag for review">
               \${flagIcon}
             </button>
-            \${imageHtml}
             <p class="question-text">\${q.question}</p>
             <ul class="options-list">\${optionsHtml}</ul>
+            \${imageHtml}
             <button class="show-answer-btn">Show Answer</button>
             <div class="answer-reveal">\${answerHtml}</div>
           \`;
