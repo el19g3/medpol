@@ -1,4 +1,4 @@
-// build.js - Final Version with Custom Palettes
+// build.js - Final Version with Image Support
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -64,6 +64,8 @@ function processPages(pages) {
     const getTitle = (property) => property?.title?.[0]?.plain_text || null;
     const getSelect = (property) => property?.select?.name || null;
     const getMultiSelect = (property) => property?.multi_select?.map(opt => opt.name) || [];
+    // New helper to get the URL from a Files property
+    const getFileUrl = (property) => property?.files?.[0]?.file?.url || null;
 
     return pages.map(page => {
         const props = page.properties;
@@ -84,7 +86,9 @@ function processPages(pages) {
             options: options,
             correctAnswers: getMultiSelect(props["Σωστή απάντηση"]),
             justification: getRichText(props["Αιτιολόγηση"]),
-            category: getSelect(props["Μάθημα"]) || "Uncategorized"
+            category: getSelect(props["Μάθημα"]) || "Uncategorized",
+            // Add the image URL to our question data
+            imageUrl: getFileUrl(props["Εικόνα"])
         };
 
         return questionData;
@@ -146,7 +150,7 @@ function generateHtml(questions) {
             <footer class="site-footer-main">
                 <p>MedPollaplis Study Tool</p>
                 <div class="theme-switcher">
-                    <button class="theme-dot" data-theme="default" title="light mode" style="background-color: #ffffff; border-color: #dee2e6;"></button>
+                    <button class="theme-dot" data-theme="default" title="white mode" style="background-color: #ffffff; border-color: #dee2e6;"></button>
                     <button class="theme-dot" data-theme="pastel" title="medpol legacy" style="background-color: #f2bac9;"></button>
                     <button class="theme-dot" data-theme="dark" title="dark mode" style="background-color: #1d2125;"></button>
                 </div>
@@ -376,6 +380,14 @@ function getCss() {
     .question-card:hover {
         background: var(--card-hover);
         transform: translateY(-4px);
+    }
+    .question-image {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        border: 1px solid var(--light-gray);
     }
     .flag-btn {
         position: absolute;
@@ -641,11 +653,13 @@ function getJavaScript() {
               <path d="M5.27292 3.11331C5.1983 2.96937 5.03137 2.875 4.85292 2.875H4.5C4.22386 2.875 4 3.09886 4 3.375V21L5.426 19.911C6.012 19.475 6.76 19.25 7.5 19.25C8.24 19.25 8.988 19.475 9.574 19.911L12 21.822L14.426 19.911C15.012 19.475 15.76 19.25 16.5 19.25C17.24 19.25 17.988 19.475 18.574 19.911L20 21V3.375C20 3.09886 19.7761 2.875 19.5 2.875H19.1471C18.9686 2.875 18.8017 2.96937 18.7271 3.11331L16.5 7.625L14.2729 3.11331C14.1983 2.96937 14.0314 2.875 13.8529 2.875H10.1471C9.96863 2.875 9.8017 2.96937 9.72708 3.11331L7.5 7.625L5.27292 3.11331Z"/>
             </svg>
           \`;
+          const imageHtml = q.imageUrl ? \`<img src="\${q.imageUrl}" alt="Question image" class="question-image">\`: '';
 
           card.innerHTML = \`
             <button class="flag-btn \${isFlagged(q.id) ? 'flagged' : ''}" title="Flag for review">
               \${flagIcon}
             </button>
+            \${imageHtml}
             <p class="question-text">\${q.question}</p>
             <ul class="options-list">\${optionsHtml}</ul>
             <button class="show-answer-btn">Show Answer</button>
