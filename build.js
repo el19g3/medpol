@@ -1,4 +1,4 @@
-// build.js - Final Version with Analytics and Cookie Notice
+// build.js - Final Version with Final Aesthetics
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
@@ -208,15 +208,15 @@ function getCss() {
       --card-background: #f2bac9;
       --card-background-solid: #baf2d8;
       --card-hover: #f2e2ba;
-      --text-color: #5c5457;
-      --heading-color: #4a4446;
+      --text-color: #423e40;
+      --heading-color: #312e2f;
       --primary-color: #e677a2;
       --primary-hover: #d66792;
       --light-gray: #e9d9a8;
       --accent-color: #77b2e6;
       --flag-color: #f2d277;
       --footer-background: #baf2d8;
-      --footer-text-color: #4a4446;
+      --footer-text-color: #312e2f;
     }
 
     /* Dark Theme */
