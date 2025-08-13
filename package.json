@@ -19,6 +19,7 @@
   "homepage": "https://github.com/el19g3/medpol#readme",
   "dependencies": {
     "@notionhq/client": "^4.0.1",
-    "dotenv": "^17.2.1"
+    "dotenv": "^17.2.1",
+    "node-fetch": "^2.7.0"
   }
 }

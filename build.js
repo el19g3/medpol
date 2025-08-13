@@ -1,7 +1,9 @@
-// build.js - Final Version with Final Aesthetics
+// build.js - Final Version with Image Downloading
 
 const { Client } = require("@notionhq/client");
 const fs = require("fs");
+const path = require("path");
+const fetch = require("node-fetch");
 require("dotenv").config();
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
@@ -11,7 +13,16 @@ async function main() {
   console.log("Fetching data from Notion...");
   try {
     const pages = await getDatabasePages();
-    const questions = processPages(pages);
+    
+    const outputDir = './dist';
+    const imagesDir = path.join(outputDir, 'images');
+
+    // Ensure output and images directories exist
+    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
+    if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir);
+
+    // Process pages, which now includes downloading images
+    const questions = await processPages(pages, imagesDir);
 
     if (questions.length === 0) {
       console.warn("⚠️ No questions were processed. This might happen if all your questions are missing a title ('Εκφώνηση').");
@@ -20,17 +31,12 @@ async function main() {
     
     console.log(`Successfully processed ${questions.length} questions.`);
     
-    const outputDir = './dist';
-    if (!fs.existsSync(outputDir)){
-        fs.mkdirSync(outputDir);
-    }
-
-    // Copy the logo file from the assets folder to the dist folder
+    // Copy the logo file
     if (fs.existsSync('assets/logo.svg')) {
         fs.copyFileSync('assets/logo.svg', `${outputDir}/logo.svg`);
         console.log("✅ Logo file copied successfully.");
     } else {
-        console.warn("⚠️ Warning: 'assets/logo.svg' not found. The logo will not be displayed. Make sure it's saved in the 'assets' folder.");
+        console.warn("⚠️ Warning: 'assets/logo.svg' not found.");
     }
 
     fs.writeFileSync(`${outputDir}/index.html`, generateHtml(questions));
@@ -39,7 +45,8 @@ async function main() {
 
     console.log("✅ Successfully created your final, upgraded website in the 'dist' folder!");
 
-  } catch (error) {
+  } catch (error)
+ {
     console.error("❌ An error occurred:", error);
   }
 }
@@ -59,14 +66,14 @@ async function getDatabasePages() {
   return pages;
 }
 
-function processPages(pages) {
+async function processPages(pages, imagesDir) {
     const getRichText = (property) => property?.rich_text?.[0]?.plain_text || null;
     const getTitle = (property) => property?.title?.[0]?.plain_text || null;
     const getSelect = (property) => property?.select?.name || null;
     const getMultiSelect = (property) => property?.multi_select?.map(opt => opt.name) || [];
     const getFileUrl = (property) => property?.files?.[0]?.file?.url || null;
 
-    return pages.map(page => {
+    const processedQuestions = await Promise.all(pages.map(async (page) => {
         const props = page.properties;
         
         const options = [];
@@ -79,18 +86,36 @@ function processPages(pages) {
             }
         }
         
-        const questionData = {
+        let localImageUrl = null;
+        const notionImageUrl = getFileUrl(props["Εικόνα"]);
+
+        if (notionImageUrl) {
+            try {
+                const response = await fetch(notionImageUrl);
+                const buffer = await response.buffer();
+                const extension = path.extname(new URL(notionImageUrl).pathname);
+                const filename = `${page.id}${extension}`;
+                const savePath = path.join(imagesDir, filename);
+                fs.writeFileSync(savePath, buffer);
+                localImageUrl = `images/${filename}`; // The new local path
+                console.log(`⬇️ Downloaded image for question ${page.id}`);
+            } catch (e) {
+                console.error(`❌ Failed to download image for question ${page.id}:`, e.message);
+            }
+        }
+
+        return {
             id: page.id,
             question: getTitle(props["Εκφώνηση"]),
             options: options,
             correctAnswers: getMultiSelect(props["Σωστή απάντηση"]),
             justification: getRichText(props["Αιτιολόγηση"]),
             category: getSelect(props["Μάθημα"]) || "Uncategorized",
-            imageUrl: getFileUrl(props["Εικόνα"])
+            imageUrl: localImageUrl
         };
+    }));
 
-        return questionData;
-    }).filter(q => q.question && q.options.length > 0);
+    return processedQuestions.filter(q => q.question && q.options.length > 0);
 }
 
 
